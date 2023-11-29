@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="stylesheet" href="styles.css" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Vehicle Flow Automation</title>
+    <script type="module" src="/main.js" defer></script>
+  </head>
+  <body>
+
+      <h1>VFA Application</h1>
+      <!-- Input Fields -->
+      <div class="input-row">
+          <input type="text" id="destinationName" placeholder="Destination Name">
+          <input type="number" id="distanceFromEntry" placeholder="Distance from Entry (meters)">
+          <input type="number" id="trucksPerDay" placeholder="Trucks/Day">
+          <input type="number" id="parkingDuration" placeholder="Parking Duration (seconds)">
+          <input type="number" id="availableParkingSpots" placeholder="Available Parking Spots">
+      </div>
+
+      <!-- Buttons -->
+      <div class="button-row">
+          <button id="addEntryBtn">Add Entry</button>
+          <button id="deleteSelectedBtn">Delete Selected</button>
+          <button id="openFileBtn">Open File</button>
+          <button id="saveToSQLiteBtn">Save to SQLite</button>
+          <button id="saveToCSVBtn">Save to CSV</button>
+      </div>
+
+      <table id="truckSchedule">
+          <thead>
+              <tr>
+                  <th>ID</th>
+                  <th>Entry Time</th>
+                  <th>Select</th>
+              </tr>
+          </thead>
+          <tbody></tbody>
+      </table>
+      <script type="module" src="main.js"></script>
+  </body>
+
+<!-- ... [existing HTML content] -->
+
+
+<!-- ... [rest of your existing HTML content] -->
+
+
+
+</html>
