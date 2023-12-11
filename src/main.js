@@ -2,7 +2,6 @@ document.getElementById('addEntryBtn').addEventListener('click', addEntry);
 document.getElementById('deleteSelectedBtn').addEventListener('click', deleteSelected);
 document.getElementById('calculateEntryTimeBtn').addEventListener('click', calculateEntryTime);
 document.getElementById('openFileBtn').addEventListener('click', openFile);
-document.getElementById('saveToCSVBtn').addEventListener('click', saveToCSV);
 document.getElementById('saveToCSVBtn').addEventListener('click', saveTableToCSV);
 
 async function openFile() {
@@ -16,18 +15,18 @@ async function openFile() {
         console.error('Error opening file:', error);
     }
 }
-
 async function saveTableToCSV() {
+    console.log("savebtn called");
     const table = document.getElementById('truckSchedule');
-    let csvContent = "";
+    let data = [];
 
-    // Iterate over table rows
-    for (let i = 0, row; row = table.rows[i]; i++) {
+    // Skip the header row and prepare data
+    for (let i = 1, row; row = table.rows[i]; i++) {
         let rowData = [];
         for (let j = 0, col; col = row.cells[j]; j++) {
-            rowData.push(`"${col.innerText}"`); // Enclose each cell in quotes
+            rowData.push(col.innerText);
         }
-        csvContent += rowData.join(",") + "\r\n";
+        data.push(rowData.join(","));
     }
 
     try {
@@ -38,11 +37,8 @@ async function saveTableToCSV() {
         });
 
         if (filePath) {
-            // Write CSV content to the selected file
-            await window.__TAURI__.fs.writeFile({
-                path: filePath,
-                contents: csvContent
-            });
+            // Send data to Rust backend for CSV creation
+            await window.__TAURI__.invoke('save_to_csv', { data, file_path: filePath });
             console.log('CSV file saved successfully');
         }
     } catch (error) {
@@ -58,7 +54,7 @@ async function calculateEntryTime() {
     const parkingDuration = parseInt(document.getElementById('parkingDuration').value, 10);
 
     try {
-        const entryTime = await invoke('calculate_entry_time', { distanceFromEntry, trucksPerDay, parkingDuration });
+        const entryTime = await window.__TAURI__.invoke('calculate_entry_time', { distanceFromEntry, trucksPerDay, parkingDuration });
         console.log('Calculated Entry Time:', entryTime);
         // Add logic to display or use the calculated entry time
     } catch (error) {
@@ -75,24 +71,28 @@ async function addEntry() {
 
     try {
         const entryTimes = await window.__TAURI__.invoke('calculate_entry_time', { distanceFromEntry, trucksPerDay, parkingDuration, availableParkingSpots });
-        entryTimes.forEach((entryTime, index) => {
-            addToTable(destinationName, entryTime, index + 1);
+        entryTimes.forEach((entryTimeData, index) => {
+            addToTable(destinationName, entryTimeData, index + 1);
         });
     } catch (error) {
         console.error('Error calculating entry time:', error);
     }
 }
 
-function addToTable(destinationName, entryTime, truckNumber) {
+function addToTable(destinationName, entryTimeData, truckNumber) {
     const table = document.getElementById('truckSchedule').getElementsByTagName('tbody')[0];
     const newRow = table.insertRow();
     const idCell = newRow.insertCell(0);
     const entryTimeCell = newRow.insertCell(1);
-    const selectCell = newRow.insertCell(2);
+    const convertedTimeCell = newRow.insertCell(2); // New cell for converted time
+    const selectCell = newRow.insertCell(3);
 
     const id = destinationName.match(/[A-Z]/g).join('') + "_" + truckNumber;
     idCell.textContent = id;
-    entryTimeCell.textContent = entryTime;
+
+    // Assuming entryTimeData is an array [entryTimeInSeconds, entryTimeIn24HrFormat]
+    entryTimeCell.textContent = entryTimeData[0]; // Original time in seconds
+    convertedTimeCell.textContent = entryTimeData[1]; // Converted time
 
     const checkbox = document.createElement('input');
     checkbox.type = 'checkbox';
@@ -123,7 +123,7 @@ function generatePastelColor(seed) {
 function deleteSelected() {
     const table = document.getElementById('truckSchedule').getElementsByTagName('tbody')[0];
     Array.from(table.rows).forEach(row => {
-        if (row.cells[2].getElementsByTagName('input')[0].checked) {
+        if (row.cells[3].getElementsByTagName('input')[0].checked) {
             table.deleteRow(row.rowIndex - 1);
         }
     });

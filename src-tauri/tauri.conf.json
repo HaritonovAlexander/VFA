@@ -18,7 +18,13 @@
       },
       "all": true,
       "fs": {
-        "all": true
+        "all": true,
+        "readFile":true,
+        "writeFile":true,
+        "copyFile":true,
+        "createDir":true,
+        "removeDir":true,
+        "renameFile":true
       },
       "shell": {
         "all": false,
@@ -45,10 +51,9 @@
         "fullscreen": false,
         "resizable": true,
         "title": "vfa",
-        "width": 800,
+        "width": 1280,
         "height": 600
       }
     ]
   }
 }
-

@@ -45,13 +45,25 @@ fn open_file(path: PathBuf) -> Result<String, String> {
 
 #[tauri::command]
 fn save_to_csv(data: Vec<String>, file_path: PathBuf) -> Result<(), String> {
+    println!("save_to_csv called with path {:?}", file_path);
     let file = File::create(file_path).map_err(|e| e.to_string())?;
     let mut wtr = Writer::from_writer(file);
+
     for record in data {
-        wtr.write_record(&[record]).map_err(|e| e.to_string())?;
+        let row: Vec<&str> = record.split(',').collect();
+        wtr.write_record(&row).map_err(|e| e.to_string())?;
     }
+
     wtr.flush().map_err(|e| e.to_string())?;
     Ok(())
+}
+
+// New function to convert time in seconds to 24-hour format
+fn convert_to_24_hour_format(time_in_seconds: f64) -> String {
+    let hours = (time_in_seconds as i32) / 3600;
+    let minutes = (time_in_seconds as i32 % 3600) / 60;
+    let seconds = time_in_seconds as i32 % 60;
+    format!("{:02}:{:02}:{:02}", hours, minutes, seconds)
 }
 
 #[tauri::command]
@@ -60,7 +72,7 @@ fn calculate_entry_time(
     trucks_per_day: i32,
     parking_duration: i32,
     available_parking_spots: i32,
-) -> Result<Vec<String>, String> {
+) -> Result<Vec<(f64, String)>, String> {
     let max_speed_kmh = 20.0;
     let max_speed_mps = max_speed_kmh / 3.6; // Convert km/h to m/s
     let travel_time = (distance_from_entry as f64 / max_speed_mps) * 2.0; // Round trip travel time in seconds
@@ -91,11 +103,13 @@ fn calculate_entry_time(
         }
     }
 
-    // Convert entry times to seconds
-    let formatted_times = entry_times
+    let times = entry_times
         .iter()
-        .map(|&time| format!("{:.0}", time))
+        .map(|&time| {
+            let formatted_time = convert_to_24_hour_format(time);
+            (time, formatted_time) // Return both original and formatted time
+        })
         .collect();
 
-    Ok(formatted_times)
+    Ok(times)
 }
